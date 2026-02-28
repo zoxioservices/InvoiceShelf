@@ -70,6 +70,12 @@ export default {
   EDIT_EXCHANGE_RATE: 'edit-exchange-rate-provider',
   DELETE_EXCHANGE_RATE: 'delete-exchange-rate-provider',
 
+  // Bank Accounts
+  CREATE_BANK_ACCOUNT: 'create-bank-account',
+  DELETE_BANK_ACCOUNT: 'delete-bank-account',
+  EDIT_BANK_ACCOUNT: 'edit-bank-account',
+  VIEW_BANK_ACCOUNT: 'view-bank-account',
+
   // Reports
   VIEW_FINANCIAL_REPORT: 'view-financial-reports',
 

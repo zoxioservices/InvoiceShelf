@@ -43,6 +43,8 @@ const CustomFieldsIndex = () =>
   import('@/scripts/admin/views/settings/CustomFieldsSetting.vue')
 const NotesSetting = () =>
   import('@/scripts/admin/views/settings/NotesSetting.vue')
+const BankAccountSetting = () =>
+  import('@/scripts/admin/views/settings/BankAccountSetting.vue')
 const ExpenseCategory = () =>
   import('@/scripts/admin/views/settings/ExpenseCategorySetting.vue')
 const ExchangeRateSetting = () =>
@@ -291,6 +293,12 @@ export default [
             path: 'payment-mode',
             name: 'payment.mode',
             component: PaymentMode,
+          },
+          {
+            path: 'bank-accounts',
+            name: 'bank.accounts',
+            meta: { ability: abilities.VIEW_BANK_ACCOUNT },
+            component: BankAccountSetting,
           },
           {
             path: 'custom-fields',

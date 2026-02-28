@@ -16,6 +16,7 @@ import { useCompanyStore } from './company'
 import { useItemStore } from './item'
 import { useUserStore } from './user'
 import { useNotesStore } from './note'
+import { useBankAccountStore } from './bank-account'
 
 export const useInvoiceStore = (useWindow = false) => {
   const defineStoreFunc = useWindow ? window.pinia.defineStore : defineStore
@@ -515,6 +516,13 @@ export const useInvoiceStore = (useWindow = false) => {
             companyStore.selectedCompanySettings.sales_tax_address_type
           this.newInvoice.discount_per_item =
             companyStore.selectedCompanySettings.discount_per_item
+
+          const bankAccountStore = useBankAccountStore()
+          await bankAccountStore.fetchBankAccounts({ limit: 'all' })
+          const defaultBA = bankAccountStore.defaultBankAccount
+          if (defaultBA) {
+            this.newInvoice.bank_account_id = defaultBA.id
+          }
 
           let dateFormat = 'YYYY-MM-DD'
           if (companyStore.selectedCompanySettings.invoice_use_time === 'YES') {

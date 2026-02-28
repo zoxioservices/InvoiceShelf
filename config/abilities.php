@@ -368,6 +368,37 @@ return [
             ],
         ],
 
+        // Bank Account
+        [
+            'name' => 'view bank account',
+            'ability' => 'view-bank-account',
+            'model' => \App\Models\BankAccount::class,
+        ],
+        [
+            'name' => 'create bank account',
+            'ability' => 'create-bank-account',
+            'model' => \App\Models\BankAccount::class,
+            'depends_on' => [
+                'view-bank-account',
+            ],
+        ],
+        [
+            'name' => 'edit bank account',
+            'ability' => 'edit-bank-account',
+            'model' => \App\Models\BankAccount::class,
+            'depends_on' => [
+                'view-bank-account',
+            ],
+        ],
+        [
+            'name' => 'delete bank account',
+            'ability' => 'delete-bank-account',
+            'model' => \App\Models\BankAccount::class,
+            'depends_on' => [
+                'view-bank-account',
+            ],
+        ],
+
         // Financial Reports
         [
             'name' => 'view financial reports',

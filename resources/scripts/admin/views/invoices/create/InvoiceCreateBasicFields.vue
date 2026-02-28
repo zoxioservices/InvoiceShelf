@@ -58,6 +58,38 @@
         :is-edit="isEdit"
         :customer-currency="invoiceStore.newInvoice.currency_id"
       />
+
+      <BaseInputGroup
+        v-if="bankAccountOptions.length > 0"
+        :label="$t('invoices.payment_qr_code')"
+        :content-loading="isLoading"
+      >
+        <BaseMultiselect
+          v-model="invoiceStore.newInvoice.bank_account_id"
+          :options="bankAccountOptions"
+          value-prop="id"
+          label="label"
+          track-by="label"
+          :searchable="true"
+          :can-deselect="true"
+          :placeholder="$t('invoices.no_qr_code')"
+          @update:modelValue="onBankAccountChange"
+        />
+      </BaseInputGroup>
+
+      <BaseInputGroup
+        v-for="field in invoicePaymentFields"
+        :key="field.key"
+        :label="field.label"
+        :content-loading="isLoading"
+        :required="field.required"
+      >
+        <BaseInput
+          v-model="invoiceStore.newInvoice.payment_details[field.key]"
+          type="text"
+          :placeholder="field.placeholder || ''"
+        />
+      </BaseInputGroup>
     </BaseInputGrid>
   </div>
 </template>
@@ -67,6 +99,7 @@ import { computed } from 'vue'
 import ExchangeRateConverter from '@/scripts/admin/components/estimate-invoice-common/ExchangeRateConverter.vue'
 import { useInvoiceStore } from '@/scripts/admin/stores/invoice'
 import { useCompanyStore } from '@/scripts/admin/stores/company'
+import { useBankAccountStore } from '@/scripts/admin/stores/bank-account'
 
 const props = defineProps({
   v: {
@@ -85,6 +118,7 @@ const props = defineProps({
 
 const invoiceStore = useInvoiceStore()
 const companyStore = useCompanyStore()
+const bankAccountStore = useBankAccountStore()
 
 const enableTime = computed(() => {
   return (
@@ -96,5 +130,52 @@ const time24h = computed(() => {
     companyStore.selectedCompanySettings.carbon_time_format.indexOf('H') > -1
   );
 })
+
+const invoiceCurrencyCode = computed(() => {
+  return invoiceStore.newInvoice.selectedCurrency?.code ?? null
+})
+
+function isBankAccountCompatible(ba) {
+  const qrType = bankAccountStore.qrTypes.find((qt) => qt.type === ba.qr_code_type)
+  if (!qrType || !qrType.supported_currencies) return true
+  if (!invoiceCurrencyCode.value) return true
+  return qrType.supported_currencies.includes(invoiceCurrencyCode.value)
+}
+
+const bankAccountOptions = computed(() => {
+  return bankAccountStore.bankAccounts
+    .filter(isBankAccountCompatible)
+    .map((ba) => {
+      const currencyCode = ba.currency ? ba.currency.code : ''
+      const displayLabel = ba.display_label || ''
+      let label = ba.name
+      if (displayLabel) {
+        label += ' - ' + displayLabel
+      }
+      if (currencyCode) {
+        label += ' (' + currencyCode + ')'
+      }
+      return { id: ba.id, label }
+    })
+})
+
+const selectedBankAccount = computed(() => {
+  if (!invoiceStore.newInvoice.bank_account_id) return null
+  return bankAccountStore.bankAccounts.find(
+    (ba) => ba.id === invoiceStore.newInvoice.bank_account_id
+  )
+})
+
+const invoicePaymentFields = computed(() => {
+  if (!selectedBankAccount.value) return []
+  const qrType = bankAccountStore.qrTypes.find(
+    (qt) => qt.type === selectedBankAccount.value.qr_code_type
+  )
+  return qrType?.invoice_fields ?? []
+})
+
+function onBankAccountChange() {
+  invoiceStore.newInvoice.payment_details = {}
+}
 
 </script>

@@ -5,7 +5,7 @@ FROM --platform=$BUILDPLATFORM node:24 AS static_builder
 
 FROM serversideup/php:8.4-fpm-alpine AS base
     USER root
-    RUN apk add --no-cache bash nano mariadb-client postgresql-client sqlite
+    RUN apk add --no-cache bash nano mariadb-client postgresql-client sqlite xz
     RUN install-php-extensions exif
     RUN install-php-extensions pgsql
     RUN install-php-extensions sqlite3

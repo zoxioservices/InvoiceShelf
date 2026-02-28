@@ -32,6 +32,8 @@ export default function () {
         taxes: [{ ...taxStub, id: Guid.raw() }],
       },
     ],
+    bank_account_id: null,
+    payment_details: {},
     customFields: [],
     fields: [],
     selectedNote: null,

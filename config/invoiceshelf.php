@@ -231,6 +231,16 @@ return [
             'model' => Payment::class,
         ],
         [
+            'title' => 'settings.menu_title.bank_accounts',
+            'group' => '',
+            'name' => 'Bank Accounts',
+            'link' => '/admin/settings/bank-accounts',
+            'icon' => 'BuildingLibraryIcon',
+            'owner_only' => false,
+            'ability' => 'view-bank-account',
+            'model' => \App\Models\BankAccount::class,
+        ],
+        [
             'title' => 'settings.menu_title.custom_fields',
             'group' => '',
             'name' => 'Custom fields',

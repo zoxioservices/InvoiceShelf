@@ -48,6 +48,8 @@ class InvoiceResource extends JsonResource
             'base_tax' => $this->base_tax,
             'base_due_amount' => $this->base_due_amount,
             'currency_id' => $this->currency_id,
+            'bank_account_id' => $this->bank_account_id,
+            'payment_details' => $this->payment_details ?? [],
             'formatted_created_at' => $this->formattedCreatedAt,
             'invoice_pdf_url' => $this->invoicePdfUrl,
             'formatted_invoice_date' => $this->formattedInvoiceDate,
@@ -77,6 +79,9 @@ class InvoiceResource extends JsonResource
             }),
             'currency' => $this->when($this->currency()->exists(), function () {
                 return new CurrencyResource($this->currency);
+            }),
+            'bank_account' => $this->when($this->bank_account_id, function () {
+                return new BankAccountResource($this->bankAccount);
             }),
         ];
     }

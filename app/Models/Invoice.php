@@ -6,6 +6,7 @@ use App;
 use App\Facades\Hashids;
 use App\Facades\PDF;
 use App\Mail\SendInvoiceMail;
+use App\Services\PaymentQrCode\PaymentQrCodeService;
 use App\Services\SerialNumberFormatter;
 use App\Space\PdfTemplateUtils;
 use App\Traits\GeneratesPdfTrait;
@@ -70,6 +71,7 @@ class Invoice extends Model implements HasMedia
             'discount' => 'float',
             'discount_val' => 'integer',
             'exchange_rate' => 'float',
+            'payment_details' => 'array',
         ];
     }
 
@@ -116,6 +118,11 @@ class Invoice extends Model implements HasMedia
     public function recurringInvoice(): BelongsTo
     {
         return $this->belongsTo(RecurringInvoice::class);
+    }
+
+    public function bankAccount(): BelongsTo
+    {
+        return $this->belongsTo(BankAccount::class);
     }
 
     public function creator(): BelongsTo
@@ -589,6 +596,21 @@ class Invoice extends Model implements HasMedia
 
         $logo = $company->logo_path;
 
+        $paymentQrCode = null;
+        $paymentBankAccount = null;
+        if ($this->bank_account_id && $this->due_amount > 0) {
+            $bankAccount = $this->bankAccount;
+            if ($bankAccount) {
+                $paymentBankAccount = $bankAccount;
+                try {
+                    $qrService = app(PaymentQrCodeService::class);
+                    $paymentQrCode = $qrService->generateQrCode($this, $bankAccount);
+                } catch (\Exception $e) {
+                    $paymentQrCode = null;
+                }
+            }
+        }
+
         view()->share([
             'invoice' => $this,
             'customFields' => $customFields,
@@ -598,6 +620,8 @@ class Invoice extends Model implements HasMedia
             'notes' => $this->getNotes(),
             'logo' => $logo ?? null,
             'taxes' => $taxes,
+            'payment_qr_code' => $paymentQrCode,
+            'payment_bank_account' => $paymentBankAccount,
         ]);
 
         $template = PdfTemplateUtils::findFormattedTemplate('invoice', $invoiceTemplate, '');

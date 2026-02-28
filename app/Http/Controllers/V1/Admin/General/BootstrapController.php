@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\V1\Admin\General;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\BankAccountResource;
 use App\Http\Resources\CompanyResource;
 use App\Http\Resources\UserResource;
+use App\Models\BankAccount;
 use App\Models\Company;
 use App\Models\CompanySetting;
 use App\Models\Currency;
@@ -73,6 +75,9 @@ class BootstrapController extends Controller
             'main_menu' => $main_menu,
             'setting_menu' => $setting_menu,
             'modules' => Module::where('enabled', true)->pluck('name'),
+            'bank_accounts' => BankAccountResource::collection(
+                BankAccount::where('company_id', $current_company->id)->get()
+            ),
         ]);
     }
 }

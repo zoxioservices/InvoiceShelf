@@ -332,6 +332,15 @@ Route::prefix('/v1')->group(function () {
 
             Route::apiResource('payment-methods', PaymentMethodsController::class);
 
+            // Bank Accounts & Payment QR Codes
+            // ----------------------------------
+
+            Route::get('/payment-qr-types', \App\Http\Controllers\V1\Admin\BankAccount\PaymentQrTypesController::class);
+
+            Route::post('/bank-accounts/delete', [\App\Http\Controllers\V1\Admin\BankAccount\BankAccountsController::class, 'delete']);
+
+            Route::apiResource('bank-accounts', \App\Http\Controllers\V1\Admin\BankAccount\BankAccountsController::class);
+
             // Custom fields
             // ----------------------------------
 

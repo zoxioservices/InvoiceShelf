@@ -116,6 +116,11 @@ class RecurringInvoice extends Model
         return $this->belongsTo(Currency::class);
     }
 
+    public function bankAccount(): BelongsTo
+    {
+        return $this->belongsTo(BankAccount::class);
+    }
+
     public function scopeWhereCompany($query)
     {
         $query->where('recurring_invoices.company_id', request()->header('company'));
@@ -343,6 +348,7 @@ class RecurringInvoice extends Model
         $newInvoice['exchange_rate'] = $this->exchange_rate;
         $newInvoice['sales_tax_type'] = $this->sales_tax_type;
         $newInvoice['sales_tax_address_type'] = $this->sales_tax_address_type;
+        $newInvoice['bank_account_id'] = $this->bank_account_id;
         $newInvoice['invoice_number'] = $serial->getNextNumber();
         $newInvoice['sequence_number'] = $serial->nextSequenceNumber;
         $newInvoice['customer_sequence_number'] = $serial->nextCustomerSequenceNumber;

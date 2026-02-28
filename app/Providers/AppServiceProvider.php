@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Bouncer\Scopes\DefaultScope;
+use App\Policies\BankAccountPolicy;
 use App\Policies\CompanyPolicy;
 use App\Policies\CustomerPolicy;
 use App\Policies\DashboardPolicy;
@@ -145,6 +146,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('delete multiple expenses', [ExpensePolicy::class, 'deleteMultiple']);
         Gate::define('delete multiple payments', [PaymentPolicy::class, 'deleteMultiple']);
         Gate::define('delete multiple recurring invoices', [RecurringInvoicePolicy::class, 'deleteMultiple']);
+        Gate::define('delete multiple bank accounts', [BankAccountPolicy::class, 'deleteMultiple']);
 
         Gate::define('view dashboard', [DashboardPolicy::class, 'view']);
 

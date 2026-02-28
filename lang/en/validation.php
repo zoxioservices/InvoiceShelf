@@ -115,4 +115,6 @@ return [
 
     'attributes' => [],
 
+    'bank_account_currency_mismatch' => ':qr_type only supports :supported payments, but this invoice is in :currency.',
+
 ];

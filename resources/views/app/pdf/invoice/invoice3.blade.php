@@ -373,6 +373,8 @@
 
         @include('app.pdf.invoice.partials.table')
 
+        @include('app.pdf.invoice.partials.payment-qr')
+
         <div class="notes">
             @if ($notes)
                 <div class="notes-label">

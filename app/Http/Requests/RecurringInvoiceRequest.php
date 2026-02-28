@@ -82,6 +82,11 @@ class RecurringInvoiceRequest extends FormRequest
             'items.*' => [
                 'required',
             ],
+            'bank_account_id' => [
+                'nullable',
+                'integer',
+                'exists:bank_accounts,id',
+            ],
         ];
 
         $customer = Customer::find($this->customer_id);

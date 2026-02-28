@@ -2,9 +2,11 @@
 
 namespace App\Http\Requests;
 
+use App\Models\BankAccount;
 use App\Models\CompanySetting;
 use App\Models\Customer;
 use App\Models\Invoice;
+use App\Services\PaymentQrCode\PaymentQrCodeService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -85,7 +87,47 @@ class InvoicesRequest extends FormRequest
                 'numeric',
                 'required',
             ],
+            'bank_account_id' => [
+                'nullable',
+                'integer',
+                'exists:bank_accounts,id',
+            ],
+            'payment_details' => ['nullable', 'array'],
         ];
+
+        $bankAccountId = $this->input('bank_account_id');
+        if ($bankAccountId) {
+            $bankAccount = BankAccount::find($bankAccountId);
+            if ($bankAccount) {
+                try {
+                    $service = app(PaymentQrCodeService::class);
+                    $generator = $service->getGenerator($bankAccount->qr_code_type);
+                    if ($generator) {
+                        $detailRules = $generator->validateInvoiceDetails($this->input('payment_details', []));
+                        foreach ($detailRules as $key => $fieldRules) {
+                            $rules["payment_details.{$key}"] = $fieldRules;
+                        }
+
+                        $supportedCurrencies = $generator->getSupportedCurrencies();
+                        if ($supportedCurrencies !== null) {
+                            $rules['bank_account_id'][] = function ($attribute, $value, $fail) use ($supportedCurrencies, $generator) {
+                                $customer = Customer::find($this->input('customer_id'));
+                                $currencyCode = $customer?->currency?->code;
+                                if ($currencyCode && ! in_array($currencyCode, $supportedCurrencies)) {
+                                    $fail(__('validation.bank_account_currency_mismatch', [
+                                        'qr_type' => $generator->getLabel(),
+                                        'supported' => implode(', ', $supportedCurrencies),
+                                        'currency' => $currencyCode,
+                                    ]));
+                                }
+                            };
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Service not available, skip invoice detail validation
+                }
+            }
+        }
 
         $companyCurrency = CompanySetting::getSetting('currency', $this->header('company'));
 
