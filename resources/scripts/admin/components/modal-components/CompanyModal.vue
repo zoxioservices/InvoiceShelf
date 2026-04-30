@@ -191,7 +191,7 @@ async function getInitials() {
 
   newCompanyForm.currency = companyStore.selectedCompanyCurrency.id
   newCompanyForm.address.country_id =
-    companyStore.selectedCompany.address.country_id
+    companyStore.selectedCompany.address?.country_id ?? null
 
   isFetchingInitialData.value = false
 }
