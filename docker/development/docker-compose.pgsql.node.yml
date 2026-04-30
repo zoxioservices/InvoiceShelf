@@ -1,0 +1,186 @@
+##############################################################################
+# InvoiceShelf — PostgreSQL development environment
+#
+# Includes: PHP-FPM, Nginx, PostgreSQL, Vite HMR (Node), Queue listener,
+#           Adminer (DB UI), Mailpit (fake mail), and an automatic
+#           first-run setup container.
+#
+# Usage:
+#   First time (one-time host setup):
+#     bash docker/development/host-setup.sh
+#
+#   Start dev environment:
+#     docker compose -f docker/development/docker-compose.pgsql.node.yml up --build
+#
+#   App:     http://invoiceshelf.test:8000
+#   Adminer: http://invoiceshelf.test:8080
+#   Mailpit: http://invoiceshelf.test:8025
+##############################################################################
+
+services:
+
+  # --------------------------------------------------------------------------
+  # Database — PostgreSQL 15 with healthcheck so setup waits for readiness
+  # --------------------------------------------------------------------------
+  db:
+    image: postgres:15
+    container_name: invoiceshelf-dev-pgsql
+    environment:
+      POSTGRES_PASSWORD: invoiceshelf
+      POSTGRES_USER: invoiceshelf
+      POSTGRES_DB: invoiceshelf
+    ports:
+      - "5433:5432"
+    volumes:
+      - invoiceshelf-dev-pgsql:/var/lib/postgresql/data
+    networks:
+      - invoiceshelf-dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U invoiceshelf -d invoiceshelf"]
+      interval: 3s
+      timeout: 5s
+      retries: 15
+
+  # --------------------------------------------------------------------------
+  # Setup — init container: runs once, exits 0, then php-fpm and queue start
+  # Handles: .env creation, composer install, key:generate, migrate, seed
+  # --------------------------------------------------------------------------
+  setup:
+    container_name: invoiceshelf-dev-setup
+    build:
+      context: ../../
+      dockerfile: docker/development/Dockerfile
+      args:
+        - UID=${USRID:-1000}
+        - GID=${GRPID:-1000}
+      target: development
+    volumes:
+      - ../../:/var/www/html
+    command: sh /var/www/html/docker/development/setup.pgsql.sh
+    environment:
+      - SEED_MODE=${SEED_MODE:-basic}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - invoiceshelf-dev
+
+  # --------------------------------------------------------------------------
+  # PHP-FPM — application server, starts after setup completes
+  # --------------------------------------------------------------------------
+  php-fpm:
+    container_name: invoiceshelf-dev-php
+    build:
+      context: ../../
+      dockerfile: docker/development/Dockerfile
+      args:
+        - UID=${USRID:-1000}
+        - GID=${GRPID:-1000}
+      target: development
+    volumes:
+      - ../../:/var/www/html
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    networks:
+      - invoiceshelf-dev
+
+  # --------------------------------------------------------------------------
+  # Queue — processes background jobs (email, PDF generation, etc.)
+  # --------------------------------------------------------------------------
+  queue:
+    container_name: invoiceshelf-dev-queue
+    build:
+      context: ../../
+      dockerfile: docker/development/Dockerfile
+      args:
+        - UID=${USRID:-1000}
+        - GID=${GRPID:-1000}
+      target: development
+    volumes:
+      - ../../:/var/www/html
+    command: sh -c "php artisan queue:work --tries=3 --sleep=3"
+    stop_grace_period: 60s
+    depends_on:
+      setup:
+        condition: service_completed_successfully
+    networks:
+      - invoiceshelf-dev
+
+  # --------------------------------------------------------------------------
+  # Nginx — web server, proxies PHP-FPM and serves static assets
+  # Runs on port 8000 to avoid conflicts with system services on port 80
+  # --------------------------------------------------------------------------
+  nginx:
+    container_name: invoiceshelf-dev-nginx
+    build:
+      context: ../../
+      dockerfile: docker/development/nginx.Dockerfile
+    environment:
+      - "PHP_FPM_HOST=php-fpm:9000"
+    ports:
+      - "8000:80"
+    volumes:
+      - ../../:/var/www/html
+    depends_on:
+      - php-fpm
+    networks:
+      invoiceshelf-dev:
+        aliases:
+          - invoiceshelf.test
+
+  # --------------------------------------------------------------------------
+  # Node — Vite dev server with HMR
+  # Listens on 0.0.0.0 inside container (port-mapped to host :5173)
+  # Browser connects to invoiceshelf.test:5173 for live asset updates
+  # node_modules uses a named volume to isolate Alpine builds from the host
+  # --------------------------------------------------------------------------
+  node:
+    container_name: invoiceshelf-dev-node
+    image: node:24-alpine
+    working_dir: /var/www/html
+    command: sh -c "npm install && npx vite --host 0.0.0.0"
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../../:/var/www/html
+      - node_modules:/var/www/html/node_modules
+    networks:
+      - invoiceshelf-dev
+
+  # --------------------------------------------------------------------------
+  # Adminer — database UI at http://invoiceshelf.test:8080
+  # --------------------------------------------------------------------------
+  adminer:
+    container_name: invoiceshelf-dev-adminer
+    build:
+      context: ../../
+      dockerfile: docker/development/adminer/Dockerfile
+    environment:
+      ADMINER_PLUGINS: tables-filter
+      ADMINER_DESIGN: konya
+    ports:
+      - "8080:8080"
+    networks:
+      - invoiceshelf-dev
+
+  # --------------------------------------------------------------------------
+  # Mailpit — fake SMTP server, catches all outgoing mail
+  # SMTP: invoiceshelf.test:1025   UI: http://invoiceshelf.test:8025
+  # --------------------------------------------------------------------------
+  mail:
+    container_name: invoiceshelf-dev-mailpit
+    image: axllent/mailpit:latest
+    restart: always
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - invoiceshelf-dev
+
+networks:
+  invoiceshelf-dev:
+
+volumes:
+  invoiceshelf-dev-pgsql:
+  node_modules:

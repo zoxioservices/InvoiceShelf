@@ -1,0 +1,36 @@
+APP_ENV=local
+APP_DEBUG=true
+APP_KEY=
+
+APP_NAME="InvoiceShelf"
+APP_TIMEZONE=UTC
+APP_URL=http://invoiceshelf.test:8000
+APP_LOCALE=en
+
+DB_CONNECTION=pgsql
+DB_HOST=db
+DB_PORT=5432
+DB_DATABASE=invoiceshelf
+DB_USERNAME=invoiceshelf
+DB_PASSWORD=invoiceshelf
+
+SESSION_DRIVER=file
+SESSION_DOMAIN=invoiceshelf.test
+SANCTUM_STATEFUL_DOMAIN=invoiceshelf.test:8000
+TRUSTED_PROXIES="*"
+
+CACHE_STORE=file
+QUEUE_CONNECTION=database
+
+MAIL_MAILER=smtp
+MAIL_HOST=mail
+MAIL_PORT=1025
+MAIL_USERNAME=
+MAIL_PASSWORD=
+MAIL_ENCRYPTION=null
+MAIL_FROM_ADDRESS=noreply@invoiceshelf.test
+MAIL_FROM_NAME="${APP_NAME}"
+
+# Dompdf: keep false so untrusted HTML in PDF notes cannot trigger outbound requests (SSRF).
+# Set true only if you fully trust all PDF HTML and need remote images/CSS.
+DOMPDF_ENABLE_REMOTE=false

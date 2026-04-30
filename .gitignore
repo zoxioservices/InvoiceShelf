@@ -23,6 +23,7 @@ Homestead.yaml
 .php-cs-fixer.cache
 .devenvconfig
 /storage/fonts*
+/storage/.docker-setup-done
 package-lock.json
 /docker/development/docker-compose.yml
 /docker/production/docker-compose.yml
