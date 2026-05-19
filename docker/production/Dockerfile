@@ -5,7 +5,7 @@ FROM --platform=$BUILDPLATFORM node:24 AS static_builder
 
 FROM serversideup/php:8.4-fpm-nginx-alpine AS base
     USER root
-    RUN apk add --no-cache bash nano mariadb-client postgresql-client sqlite xz
+    RUN apk add --no-cache bash nano mariadb-client postgresql-client sqlite xz unzip
     RUN install-php-extensions exif
     RUN install-php-extensions pgsql
     RUN install-php-extensions sqlite3
@@ -18,6 +18,13 @@ FROM serversideup/php:8.4-fpm-nginx-alpine AS base
     RUN install-php-extensions bcmath
     RUN install-php-extensions intl
     RUN install-php-extensions curl
+
+    RUN mkdir -p /usr/share/fonts/barlow && \
+    curl -L 'https://github.com/google/fonts/archive/refs/heads/main.zip' \
+    -o /tmp/fonts.zip && \
+    unzip /tmp/fonts.zip 'fonts-main/ofl/barlow/*' -d /tmp && \
+    cp /tmp/fonts-main/ofl/barlow/*.ttf /usr/share/fonts/barlow/ && \
+    fc-cache -f
 
     # Copy entrypoint and inject script, and make sure they are executable
     COPY --chmod=755 docker/production/inject.sh /inject.sh
